@@ -1,11 +1,13 @@
-/** Horizontal Kanban board with drag-and-drop powered by @dnd-kit */
-import { useCallback, useMemo, useState } from 'react';
+/** Horizontal Kanban board with drag-and-drop powered by @dnd-kit.
+ *  Mobile: horizontal snap-scroll with column dots indicator + TouchSensor. */
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
   closestCorners,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragStartEvent,
@@ -34,9 +36,13 @@ export default function KanbanBoard({ filters, readOnly = false }: KanbanBoardPr
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [newColumnName, setNewColumnName] = useState('');
   const [creatingColumn, setCreatingColumn] = useState(false);
+  const [activeColIndex, setActiveColIndex] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // M5: TouchSensor with delay for long-press drag on mobile
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
     useSensor(KeyboardSensor)
   );
 
@@ -51,6 +57,20 @@ export default function KanbanBoard({ filters, readOnly = false }: KanbanBoardPr
     [filters, sortedColumns, tasks]
   );
   const visibleTaskIds = useMemo(() => new Set(visibleTasks.map((task) => task.id)), [visibleTasks]);
+
+  // M4: Track active column index via scroll position
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handleScroll = () => {
+      const scrollLeft = el.scrollLeft;
+      const colWidth = el.firstElementChild?.clientWidth ?? 1;
+      const index = Math.round(scrollLeft / colWidth);
+      setActiveColIndex(Math.min(index, sortedColumns.length - 1));
+    };
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [sortedColumns.length]);
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
@@ -159,7 +179,11 @@ export default function KanbanBoard({ filters, readOnly = false }: KanbanBoardPr
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-5 h-full overflow-x-auto pb-4">
+      {/* M4: horizontal scroll with snap on mobile */}
+      <div
+        ref={scrollRef}
+        className="flex gap-4 md:gap-5 h-full overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none"
+      >
         <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
           {sortedColumns.map((column) => (
             <KanbanColumn
@@ -170,7 +194,7 @@ export default function KanbanBoard({ filters, readOnly = false }: KanbanBoardPr
             />
           ))}
         </SortableContext>
-        {!readOnly && <div className="w-72 min-w-[288px] shrink-0">
+        {!readOnly && <div className="w-72 min-w-[85vw] md:min-w-[288px] shrink-0 snap-center">
           {showAddColumn ? (
             <div className="glass rounded-xl p-4">
               <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-[var(--text-secondary)]">
@@ -217,6 +241,20 @@ export default function KanbanBoard({ filters, readOnly = false }: KanbanBoardPr
           )}
         </div>}
       </div>
+
+      {/* M4: Column dot indicators — mobile only */}
+      {sortedColumns.length > 1 && (
+        <div className="flex justify-center gap-1.5 pt-2 md:hidden">
+          {sortedColumns.map((col, i) => (
+            <span
+              key={col.id}
+              className={`h-1.5 rounded-full transition-all ${
+                i === activeColIndex ? 'w-4 bg-[var(--accent-primary)]' : 'w-1.5 bg-[var(--text-muted)]'
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       <DragOverlay>
         {activeTask && visibleTaskIds.has(activeTask.id) && <KanbanCard task={activeTask} isOverlay />}

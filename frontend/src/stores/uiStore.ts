@@ -31,6 +31,7 @@ const getInitialTheme = (): ThemeMode => {
 
 interface UIState {
   sidebarOpen: boolean;
+  mobileMenuOpen: boolean;
   activeView: string;
   modalType: ModalType;
   modalData: Record<string, unknown>;
@@ -41,6 +42,7 @@ interface UIState {
 
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  setMobileMenuOpen: (open: boolean) => void;
   setActiveView: (view: string) => void;
   openModal: (type: ModalType, data?: Record<string, unknown>) => void;
   closeModal: () => void;
@@ -54,6 +56,7 @@ interface UIState {
 
 export const useUIStore = create<UIState>((set) => ({
   sidebarOpen: true,
+  mobileMenuOpen: false,
   activeView: 'dashboard',
   modalType: null,
   modalData: {},
@@ -68,6 +71,7 @@ export const useUIStore = create<UIState>((set) => ({
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
   setActiveView: (view) => set({ activeView: view }),
   openModal: (type, data = {}) => set({ modalType: type, modalData: data }),
   closeModal: () => set({ modalType: null, modalData: {} }),

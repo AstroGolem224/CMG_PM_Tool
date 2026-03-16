@@ -1,7 +1,8 @@
-/** Slide-in panel showing full task details with inline editing */
+/** Slide-in panel showing full task details with inline editing.
+ *  Desktop: slides in from right. Mobile (<md): full-screen slide-up with back button. */
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2, Calendar } from 'lucide-react';
+import { ArrowLeft, X, Trash2, Calendar } from 'lucide-react';
 import { cn, priorityColors, priorityLabels } from '@/lib/utils';
 import ErrorBanner from '@/components/common/ErrorBanner';
 import TaskLabels from './TaskLabels';
@@ -89,16 +90,16 @@ export default function TaskDetailPanel() {
             onClick={handleClose}
           />
 
-          {/* Panel */}
+          {/* Panel — desktop: slide from right, mobile: slide from bottom full-screen */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             data-testid="task-detail-panel"
-            className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-lg flex-col border-l border-[var(--glass-border)] glass shadow-2xl"
+            className="fixed right-0 top-0 bottom-0 z-50 hidden md:flex w-full max-w-lg flex-col border-l border-[var(--glass-border)] glass shadow-2xl"
           >
-            {/* Header */}
+            {/* Desktop header */}
             <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-6 py-4">
               <div>
                 <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -125,123 +126,24 @@ export default function TaskDetailPanel() {
               </div>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
-              {error && <ErrorBanner message={error} />}
-              {readOnly && (
-                <div className="surface-subtle rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-[var(--text-secondary)]">
-                  archived project: task details are read-only until the project is restored.
-                </div>
-              )}
-              {/* Title */}
-              <div>
-                <label
-                  htmlFor="task-title"
-                  className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
-                >
-                  Title
-                </label>
-                <input
-                  id="task-title"
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onBlur={handleSave}
-                  disabled={readOnly}
-                  className="w-full border-b border-[var(--glass-border)] bg-transparent pb-1 text-lg font-semibold text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--glass-border-hot)] focus:border-[var(--accent-primary)]"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label
-                  htmlFor="task-description"
-                  className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="task-description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  onBlur={handleSave}
-                  placeholder="Add a description..."
-                  rows={4}
-                  disabled={readOnly}
-                  className="control-shell w-full resize-none rounded-lg px-3 py-2 text-sm outline-none"
-                />
-              </div>
-
-              {/* Priority */}
-              <div>
-                <label className="mb-2 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Priority
-                </label>
-                <div className="flex gap-2">
-                  {priorities.map((p) => {
-                    const pStyle = priorityColors[p];
-                    return (
-                      <button
-                        key={p}
-                        onClick={() => {
-                          if (readOnly) return;
-                          setPriority(p);
-                          if (selectedTask) {
-                            updateTask(selectedTask.id, { priority: p });
-                          }
-                        }}
-                        disabled={readOnly}
-                        className={cn(
-                          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-                          priority === p
-                            ? `${pStyle.bg} ${pStyle.text} ring-1 ring-white/10`
-                            : 'button-ghost'
-                        )}
-                      >
-                        <span className={cn('w-2 h-2 rounded-full', pStyle.dot)} />
-                        {priorityLabels[p]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Deadline */}
-              <div>
-                <label
-                  htmlFor="task-deadline"
-                  className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
-                >
-                  <Calendar size={12} className="inline mr-1" />
-                  Deadline
-                </label>
-                <input
-                  id="task-deadline"
-                  type="date"
-                  value={deadline}
-                  onChange={(e) => {
-                    if (readOnly) return;
-                    setDeadline(e.target.value);
-                    if (selectedTask) {
-                      updateTask(selectedTask.id, { deadline: e.target.value || null });
-                    }
-                  }}
-                  disabled={readOnly}
-                  className="control-shell w-full rounded-lg px-3 py-2 text-sm outline-none [color-scheme:dark]"
-                />
-              </div>
-
-              {/* Labels */}
-              {task && (
-                <TaskLabels task={task} onUpdate={handleRefresh} disabled={readOnly} />
-              )}
-
-              {/* Divider */}
-              <div className="border-t border-[var(--glass-border)]" />
-
-              {/* Comments */}
-              {task && <TaskComments taskId={task.id} disabled={readOnly} />}
-            </div>
+            {/* Desktop content */}
+            <TaskDetailContent
+              title={title}
+              setTitle={setTitle}
+              description={description}
+              setDescription={setDescription}
+              priority={priority}
+              setPriority={setPriority}
+              deadline={deadline}
+              setDeadline={setDeadline}
+              task={task}
+              selectedTask={selectedTask}
+              readOnly={readOnly}
+              error={error}
+              onSave={handleSave}
+              onRefresh={handleRefresh}
+              onUpdate={updateTask}
+            />
 
             {/* Footer save button */}
             <div className="border-t border-[var(--glass-border)] px-6 py-4">
@@ -254,8 +156,211 @@ export default function TaskDetailPanel() {
               </button>
             </div>
           </motion.div>
+
+          {/* M7: Mobile full-screen panel — slide from bottom */}
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed inset-0 z-50 flex md:hidden flex-col glass"
+          >
+            {/* Mobile header with back button */}
+            <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-4 py-3">
+              <button
+                onClick={handleClose}
+                className="flex items-center gap-2 rounded-lg p-2 text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+                aria-label="Back"
+              >
+                <ArrowLeft size={20} />
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em]">Back</span>
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDelete}
+                  disabled={readOnly}
+                  className="button-ghost rounded-lg p-2 text-[var(--neon-red)] disabled:opacity-40"
+                  aria-label="Delete task"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile content */}
+            <TaskDetailContent
+              title={title}
+              setTitle={setTitle}
+              description={description}
+              setDescription={setDescription}
+              priority={priority}
+              setPriority={setPriority}
+              deadline={deadline}
+              setDeadline={setDeadline}
+              task={task}
+              selectedTask={selectedTask}
+              readOnly={readOnly}
+              error={error}
+              onSave={handleSave}
+              onRefresh={handleRefresh}
+              onUpdate={updateTask}
+            />
+
+            {/* Mobile footer */}
+            <div
+              className="border-t border-[var(--glass-border)] px-4 py-3"
+              style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+            >
+              <button
+                onClick={handleSave}
+                disabled={readOnly}
+                className="button-primary w-full rounded-lg py-2.5 text-sm font-medium disabled:opacity-50"
+              >
+                Save Changes
+              </button>
+            </div>
+          </motion.div>
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+/** Shared content between desktop and mobile panels */
+function TaskDetailContent({
+  title, setTitle, description, setDescription,
+  priority, setPriority, deadline, setDeadline,
+  task, selectedTask, readOnly, error,
+  onSave, onRefresh, onUpdate,
+}: {
+  title: string; setTitle: (v: string) => void;
+  description: string; setDescription: (v: string) => void;
+  priority: Priority; setPriority: (v: Priority) => void;
+  deadline: string; setDeadline: (v: string) => void;
+  task: Task;
+  selectedTask: Task | null;
+  readOnly: boolean;
+  error: string | null;
+  onSave: () => void;
+  onRefresh: () => void;
+  onUpdate: (id: string, data: Record<string, unknown>) => void;
+}) {
+  return (
+    <div className="flex-1 space-y-5 overflow-y-auto px-4 md:px-6 py-5">
+      {error && <ErrorBanner message={error} />}
+      {readOnly && (
+        <div className="surface-subtle rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-[var(--text-secondary)]">
+          archived project: task details are read-only until the project is restored.
+        </div>
+      )}
+      {/* Title */}
+      <div>
+        <label
+          htmlFor="task-title"
+          className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
+        >
+          Title
+        </label>
+        <input
+          id="task-title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={onSave}
+          disabled={readOnly}
+          className="w-full border-b border-[var(--glass-border)] bg-transparent pb-1 text-lg font-semibold text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--glass-border-hot)] focus:border-[var(--accent-primary)]"
+        />
+      </div>
+
+      {/* Description */}
+      <div>
+        <label
+          htmlFor="task-description"
+          className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
+        >
+          Description
+        </label>
+        <textarea
+          id="task-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onBlur={onSave}
+          placeholder="Add a description..."
+          rows={4}
+          disabled={readOnly}
+          className="control-shell w-full resize-none rounded-lg px-3 py-2 text-sm outline-none"
+        />
+      </div>
+
+      {/* Priority */}
+      <div>
+        <label className="mb-2 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          Priority
+        </label>
+        <div className="flex gap-2">
+          {priorities.map((p) => {
+            const pStyle = priorityColors[p];
+            return (
+              <button
+                key={p}
+                onClick={() => {
+                  if (readOnly) return;
+                  setPriority(p);
+                  if (selectedTask) {
+                    onUpdate(selectedTask.id, { priority: p });
+                  }
+                }}
+                disabled={readOnly}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                  priority === p
+                    ? `${pStyle.bg} ${pStyle.text} ring-1 ring-white/10`
+                    : 'button-ghost'
+                )}
+              >
+                <span className={cn('w-2 h-2 rounded-full', pStyle.dot)} />
+                {priorityLabels[p]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Deadline */}
+      <div>
+        <label
+          htmlFor="task-deadline"
+          className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
+        >
+          <Calendar size={12} className="inline mr-1" />
+          Deadline
+        </label>
+        <input
+          id="task-deadline"
+          type="date"
+          value={deadline}
+          onChange={(e) => {
+            if (readOnly) return;
+            setDeadline(e.target.value);
+            if (selectedTask) {
+              onUpdate(selectedTask.id, { deadline: e.target.value || null });
+            }
+          }}
+          disabled={readOnly}
+          className="control-shell w-full rounded-lg px-3 py-2 text-sm outline-none [color-scheme:dark]"
+        />
+      </div>
+
+      {/* Labels */}
+      {task && (
+        <TaskLabels task={task} onUpdate={onRefresh} disabled={readOnly} />
+      )}
+
+      {/* Divider */}
+      <div className="border-t border-[var(--glass-border)]" />
+
+      {/* Comments */}
+      {task && <TaskComments taskId={task.id} disabled={readOnly} />}
+    </div>
   );
 }

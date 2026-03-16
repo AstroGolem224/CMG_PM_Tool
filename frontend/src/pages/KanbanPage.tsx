@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2, Lock, Plus } from 'lucide-react';
 import { labelsApi } from '@/api/labels';
 import LabelFilterBar from '@/components/common/LabelFilterBar';
 import ErrorBanner from '@/components/common/ErrorBanner';
 import BulkTaskActions from '@/components/kanban/BulkTaskActions';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
+import AddTaskModal from '@/components/kanban/AddTaskModal';
 import ProjectLabelManager from '@/components/projects/ProjectLabelManager';
 import ProjectViewManager from '@/components/projects/ProjectViewManager';
 import TaskDetailPanel from '@/components/tasks/TaskDetailPanel';
@@ -28,6 +29,7 @@ export default function KanbanPage() {
   const { tasks, fetchTasks, loading: taskLoading, error: taskError } = useTaskStore();
   const [projectLabels, setProjectLabels] = useState<Label[]>([]);
   const [filters, setFilters] = useState<TaskFilterState>(defaultFilters);
+  const [fabModalOpen, setFabModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -56,6 +58,10 @@ export default function KanbanPage() {
   const loading = projectLoading || taskLoading;
   const readOnly = currentProject?.status === 'archived';
   const visibleTasks = filterTasks(tasks, filters, columns);
+
+  // M8: First column id for FAB quick-add
+  const sortedColumns = [...columns].sort((a, b) => a.position - b.position);
+  const firstColumnId = sortedColumns[0]?.id;
 
   if (loading) {
     return (
@@ -124,6 +130,28 @@ export default function KanbanPage() {
       )}
       <KanbanBoard filters={filters} readOnly={readOnly} />
       <TaskDetailPanel />
+
+      {/* M8: Floating Action Button — mobile only */}
+      {!readOnly && firstColumnId && (
+        <>
+          <motion.button
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', damping: 14, stiffness: 260, delay: 0.3 }}
+            onClick={() => setFabModalOpen(true)}
+            className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full button-primary shadow-lg md:hidden"
+            aria-label="Quick add task"
+          >
+            <Plus size={24} />
+          </motion.button>
+          {fabModalOpen && (
+            <AddTaskModal
+              columnId={firstColumnId}
+              onClose={() => setFabModalOpen(false)}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
-/** Modal dialog for quickly creating a new task in a column */
+/** Modal dialog for quickly creating a new task in a column.
+ *  Desktop: centered modal. Mobile (<md): bottom-sheet with drag handle. */
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,7 +54,8 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      {/* M6: items-end on mobile (bottom-sheet), items-center on md+ (centered modal) */}
+      <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -63,13 +65,20 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
           onClick={onClose}
         />
 
-        {/* Modal */}
+        {/* Modal / Bottom-Sheet */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative glass w-full max-w-md p-6 shadow-2xl"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 40 }}
+          transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+          className="relative glass w-full max-w-none md:max-w-md rounded-t-2xl md:rounded-xl p-6 shadow-2xl"
+          style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
         >
+          {/* M6: Drag handle — mobile only */}
+          <div className="flex justify-center mb-3 md:hidden">
+            <span className="h-1 w-10 rounded-full bg-[var(--text-muted)]" />
+          </div>
+
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">

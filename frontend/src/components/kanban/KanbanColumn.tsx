@@ -87,7 +87,7 @@ export default function KanbanColumn({ column, tasks, readOnly = false }: Kanban
       data-testid={`kanban-column-${column.id}`}
       data-column-name={column.name}
       data-column-kind={column.kind}
-      className={`bevel-panel flex w-72 min-w-[288px] shrink-0 flex-col ${isDragging ? 'opacity-60' : ''}`}
+      className={`bevel-panel flex w-72 min-w-[85vw] md:min-w-[288px] shrink-0 flex-col snap-center ${isDragging ? 'opacity-60' : ''}`}
     >
       {/* Column header */}
       <div className="mb-3 flex items-center justify-between px-1">
