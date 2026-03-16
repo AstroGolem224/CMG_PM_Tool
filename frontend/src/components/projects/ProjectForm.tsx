@@ -3,11 +3,12 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check } from 'lucide-react';
 import { cn, colorPalette } from '@/lib/utils';
+import ErrorBanner from '@/components/common/ErrorBanner';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 
 export default function ProjectForm() {
-  const { createProject, updateProject } = useProjectStore();
+  const { createProject, updateProject, error } = useProjectStore();
   const { modalType, modalData, closeModal } = useUIStore();
 
   const isEditing = modalType === 'editProject';
@@ -22,6 +23,12 @@ export default function ProjectForm() {
   useEffect(() => {
     nameRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    setName(existingProject?.name ?? '');
+    setDescription(existingProject?.description ?? '');
+    setColor(existingProject?.color ?? '#6366f1');
+  }, [existingProject?.color, existingProject?.description, existingProject?.name]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,23 +64,29 @@ export default function ProjectForm() {
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative glass rounded-xl p-6 w-full max-w-md shadow-2xl"
+          className="relative glass w-full max-w-md p-6 shadow-2xl"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">
-              {isEditing ? 'Edit Project' : 'New Project'}
-            </h2>
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                // project registry
+              </p>
+              <h2 className="panel-heading mt-1">
+                {isEditing ? 'Edit Project' : 'New Project'}
+              </h2>
+            </div>
             <button
               onClick={closeModal}
-              className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="button-ghost rounded-lg p-2"
             >
               <X size={18} />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {error && <ErrorBanner message={error} />}
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                 Name <span className="text-red-400">*</span>
               </label>
               <input
@@ -82,13 +95,13 @@ export default function ProjectForm() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Project name..."
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25"
+                className="control-shell w-full rounded-lg px-3 py-2 text-sm outline-none"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                 Description
               </label>
               <textarea
@@ -96,12 +109,12 @@ export default function ProjectForm() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Optional description..."
                 rows={3}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25 resize-none"
+                className="control-shell w-full resize-none rounded-lg px-3 py-2 text-sm outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                 Color
               </label>
               <div className="flex gap-2 flex-wrap">
@@ -112,7 +125,7 @@ export default function ProjectForm() {
                     onClick={() => setColor(c)}
                     className={cn(
                       'w-8 h-8 rounded-lg transition-all flex items-center justify-center',
-                      color === c ? 'ring-2 ring-white/30 scale-110' : 'hover:scale-105'
+                      color === c ? 'ring-2 ring-[var(--accent-gold)] scale-110' : 'hover:scale-105'
                     )}
                     style={{ backgroundColor: c }}
                   >
@@ -126,14 +139,14 @@ export default function ProjectForm() {
               <button
                 type="button"
                 onClick={closeModal}
-                className="flex-1 py-2 rounded-lg text-sm font-medium text-gray-400 bg-white/5 hover:bg-white/10 transition-colors"
+                className="button-ghost flex-1 rounded-lg py-2 text-sm font-medium"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!name.trim() || loading}
-                className="flex-1 py-2 rounded-lg text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="button-primary flex-1 rounded-lg py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
               </button>

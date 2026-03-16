@@ -12,53 +12,54 @@ const cards = [
   {
     key: 'total_tasks' as const,
     label: 'Total Tasks',
+    hint: 'all lanes',
     icon: ListTodo,
-    gradient: 'from-primary-500/20 to-primary-600/5',
-    iconColor: 'text-primary-400',
   },
   {
     key: 'in_progress' as const,
     label: 'In Progress',
+    hint: 'active throughput',
     icon: Clock,
-    gradient: 'from-blue-500/20 to-blue-600/5',
-    iconColor: 'text-blue-400',
   },
   {
     key: 'completed' as const,
     label: 'Completed',
+    hint: 'done state',
     icon: CheckCircle2,
-    gradient: 'from-emerald-500/20 to-emerald-600/5',
-    iconColor: 'text-emerald-400',
   },
   {
     key: 'overdue' as const,
     label: 'Overdue',
+    hint: 'requires action',
     icon: AlertTriangle,
-    gradient: 'from-red-500/20 to-red-600/5',
-    iconColor: 'text-red-400',
   },
 ];
 
 export default function StatsCards({ stats, loading }: StatsCardsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map(({ key, label, icon: Icon, gradient, iconColor }, index) => (
+      {cards.map(({ key, label, hint, icon: Icon }, index) => (
         <motion.div
           key={key}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05, duration: 0.3 }}
-          className={`glass rounded-xl p-5 bg-gradient-to-br ${gradient}`}
+          className="glass p-5"
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-              {label}
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                {label}
+              </p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">{hint}</p>
+            </div>
+            <span className="rounded-lg border border-[var(--glass-border-hot)] bg-[color-mix(in_srgb,var(--accent-primary)_12%,transparent)] p-2 text-[var(--accent-primary)]">
+              <Icon size={18} />
             </span>
-            <Icon size={20} className={iconColor} />
           </div>
-          <p className="text-3xl font-bold text-white">
+          <p className="font-display text-4xl uppercase tracking-[0.08em] text-[var(--accent-gold)]">
             {loading ? (
-              <span className="inline-block w-10 h-8 bg-white/10 rounded animate-pulse" />
+              <span className="inline-block h-8 w-10 animate-pulse rounded bg-white/10" />
             ) : (
               stats?.[key] ?? 0
             )}

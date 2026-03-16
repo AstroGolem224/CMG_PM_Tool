@@ -1,8 +1,9 @@
 /** Root application component with routing and global modals */
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import ToastViewport from '@/components/common/ToastViewport';
 import MainLayout from '@/components/layout/MainLayout';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { useUIStore } from '@/stores/uiStore';
@@ -21,7 +22,11 @@ function PageLoader() {
 }
 
 export default function App() {
-  const { modalType } = useUIStore();
+  const { modalType, theme } = useUIStore();
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   return (
     <BrowserRouter>
@@ -42,6 +47,7 @@ export default function App() {
           <ProjectForm />
         )}
       </AnimatePresence>
+      <ToastViewport />
     </BrowserRouter>
   );
 }

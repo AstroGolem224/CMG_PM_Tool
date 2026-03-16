@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/data/
+frontend/coverage/

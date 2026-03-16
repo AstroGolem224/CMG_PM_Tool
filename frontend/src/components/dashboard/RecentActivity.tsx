@@ -15,27 +15,32 @@ export default function RecentActivity({ activities, loading }: RecentActivityPr
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="glass rounded-xl p-5"
+      className="glass p-5"
     >
       <div className="flex items-center gap-2 mb-4">
-        <Activity size={18} className="text-primary-400" />
-        <h3 className="text-sm font-semibold text-white">Recent Activity</h3>
+        <Activity size={18} className="text-[var(--accent-primary)]" />
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+            telemetry
+          </p>
+          <h3 className="panel-heading text-base">Recent Activity</h3>
+        </div>
       </div>
 
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-10 bg-white/5 rounded-lg animate-pulse" />
+            <div key={i} className="h-10 rounded-lg bg-white/5 animate-pulse" />
           ))}
         </div>
       ) : activities.length === 0 ? (
-        <p className="text-sm text-gray-500 text-center py-6">
-          No recent activity.
+        <p className="py-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+          no recent activity
         </p>
       ) : (
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-[7px] top-2 bottom-2 w-px bg-white/10" />
+          <div className="absolute bottom-2 left-[7px] top-2 w-px bg-[var(--glass-border-hot)]" />
 
           <div className="space-y-3">
             {activities.map((item, index) => (
@@ -46,17 +51,21 @@ export default function RecentActivity({ activities, loading }: RecentActivityPr
                 transition={{ delay: index * 0.03 }}
                 className="flex items-start gap-3 relative"
               >
-                <span className="w-[15px] h-[15px] rounded-full bg-gray-800 border-2 border-primary-500/50 shrink-0 mt-0.5 z-10" />
+                <span className="z-10 mt-0.5 h-[15px] w-[15px] shrink-0 rounded-full border-2 border-[var(--glass-border-hot)] bg-[var(--bg-base)]" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-300">
-                    <span className="font-medium text-gray-200">{item.task_title}</span>
+                  <p className="text-sm text-[var(--text-secondary)]">
+                    <span className="font-medium text-[var(--text-primary)]">{item.task_title}</span>
                     {' '}
-                    <span className="text-gray-500">{item.action}</span>
+                    <span className="text-[var(--text-muted)]">{item.action}</span>
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-500">{item.project_name}</span>
-                    <span className="text-xs text-gray-600">&middot;</span>
-                    <span className="text-xs text-gray-600">{formatRelativeTime(item.timestamp)}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                      {item.project_name}
+                    </span>
+                    <span className="text-xs text-[var(--text-muted)]">&middot;</span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                      {formatRelativeTime(item.timestamp)}
+                    </span>
                   </div>
                 </div>
               </motion.div>

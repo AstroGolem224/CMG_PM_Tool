@@ -1,6 +1,6 @@
 /** Top header bar with page title, breadcrumb, and search */
 import { useLocation, useParams } from 'react-router-dom';
-import { Search, Menu } from 'lucide-react';
+import { Flame, Menu, ScanSearch, Sparkles, Target, Zap } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -18,42 +18,80 @@ export default function Header() {
   const location = useLocation();
   const { id } = useParams();
   const { currentProject, projects } = useProjectStore();
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { sidebarOpen, toggleSidebar, theme, setTheme, boardViewContext } = useUIStore();
 
   const projectName = currentProject?.name ?? projects.find((p) => p.id === id)?.name;
   const { title, breadcrumb } = getPageTitle(location.pathname, projectName);
 
   return (
-    <header className="h-16 border-b border-white/10 flex items-center justify-between px-6 shrink-0 bg-gray-950/50 backdrop-blur-sm">
+    <header className="glass relative z-10 flex h-20 shrink-0 items-center justify-between border-b border-[var(--glass-border)] px-6">
       <div className="flex items-center gap-4">
         {!sidebarOpen && (
           <button
             onClick={toggleSidebar}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="rounded-lg p-2 text-[var(--text-secondary)] transition hover:bg-white/10 hover:text-[var(--text-primary)]"
             aria-label="Open sidebar"
           >
             <Menu size={20} />
           </button>
         )}
-        <div className="flex items-center gap-2">
-          {breadcrumb && (
-            <>
-              <span className="text-gray-500 text-sm">{breadcrumb}</span>
-              <span className="text-gray-600">/</span>
-            </>
+        <div>
+          <div className="flex items-center gap-2">
+            {breadcrumb && (
+              <>
+                <span className="mono-label">{breadcrumb}</span>
+                <span className="text-[var(--text-muted)]">/</span>
+              </>
+            )}
+            <h1 className="font-display text-2xl uppercase tracking-[0.14em] text-[var(--text-primary)]">
+              {title}
+            </h1>
+          </div>
+          <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-secondary)]">
+            // mission control // lane-aware project ops
+          </p>
+          {location.pathname.startsWith('/projects/') && boardViewContext.projectId === id && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="badge-shell inline-flex items-center gap-1 rounded-full px-2 py-1">
+                <Target size={11} />
+                active: {boardViewContext.activeViewName ?? 'manual'}
+              </span>
+              <span className="badge-shell inline-flex items-center gap-1 rounded-full px-2 py-1 text-[var(--accent-gold)]">
+                <Sparkles size={11} />
+                default: {boardViewContext.defaultViewName ?? 'none'}
+              </span>
+            </div>
           )}
-          <h1 className="text-lg font-semibold text-white">{title}</h1>
         </div>
       </div>
 
-      {/* Search placeholder */}
-      <div className="relative max-w-xs w-full">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25 transition-colors"
-        />
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 rounded-lg border border-[var(--glass-border)] bg-[rgba(12,18,20,0.55)] px-2 py-2">
+          {(
+            [
+              { id: 'ember', icon: Flame, label: 'ember' },
+              { id: 'neon', icon: Zap, label: 'neon' },
+              { id: 'light', icon: ScanSearch, label: 'light' },
+            ] as const
+          ).map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTheme(id)}
+              className={`rounded-md px-2 py-1 transition ${
+                theme === id
+                  ? 'bg-[var(--accent-primary)] text-[var(--bg-void)] shadow-[var(--glow-primary)]'
+                  : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]'
+              }`}
+              aria-label={`Switch to ${label} theme`}
+            >
+              <Icon size={15} />
+            </button>
+          ))}
+        </div>
+        <div className="rounded-lg border border-[var(--glass-border)] bg-[rgba(12,18,20,0.55)] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-secondary)]">
+          search queued
+        </div>
       </div>
     </header>
   );

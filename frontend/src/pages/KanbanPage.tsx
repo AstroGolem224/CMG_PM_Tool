@@ -1,26 +1,61 @@
 /** Kanban board page for a specific project */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
+import { labelsApi } from '@/api/labels';
+import LabelFilterBar from '@/components/common/LabelFilterBar';
+import ErrorBanner from '@/components/common/ErrorBanner';
+import BulkTaskActions from '@/components/kanban/BulkTaskActions';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
+import ProjectLabelManager from '@/components/projects/ProjectLabelManager';
+import ProjectViewManager from '@/components/projects/ProjectViewManager';
 import TaskDetailPanel from '@/components/tasks/TaskDetailPanel';
+import { filterTasks } from '@/lib/taskFilters';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTaskStore } from '@/stores/taskStore';
+import type { Label, TaskFilterState } from '@/types';
+
+const defaultFilters: TaskFilterState = {
+  labelIds: [],
+  priorities: [],
+  completion: 'all',
+};
 
 export default function KanbanPage() {
   const { id } = useParams<{ id: string }>();
-  const { fetchProject, loading: projectLoading } = useProjectStore();
-  const { fetchTasks, loading: taskLoading } = useTaskStore();
+  const { currentProject, columns, fetchProject, loading: projectLoading, error: projectError } = useProjectStore();
+  const { tasks, fetchTasks, loading: taskLoading, error: taskError } = useTaskStore();
+  const [projectLabels, setProjectLabels] = useState<Label[]>([]);
+  const [filters, setFilters] = useState<TaskFilterState>(defaultFilters);
 
   useEffect(() => {
     if (id) {
-      fetchProject(id);
-      fetchTasks(id);
+      setFilters(defaultFilters);
+      void fetchProject(id);
+      void fetchTasks(id);
     }
   }, [id, fetchProject, fetchTasks]);
 
+  useEffect(() => {
+    if (!id) return;
+
+    labelsApi
+      .listByProject(id)
+      .then(setProjectLabels)
+      .catch(() => setProjectLabels([]));
+  }, [id]);
+
+  useEffect(() => {
+    setFilters((current) => ({
+      ...current,
+      labelIds: current.labelIds.filter((labelId) => projectLabels.some((label) => label.id === labelId)),
+    }));
+  }, [projectLabels]);
+
   const loading = projectLoading || taskLoading;
+  const readOnly = currentProject?.status === 'archived';
+  const visibleTasks = filterTasks(tasks, filters, columns);
 
   if (loading) {
     return (
@@ -36,8 +71,58 @@ export default function KanbanPage() {
   }
 
   return (
-    <div className="h-full">
-      <KanbanBoard />
+    <div className="h-full space-y-4">
+      {(projectError || taskError) && (
+        <ErrorBanner message={projectError ?? taskError ?? 'Failed to load kanban data.'} />
+      )}
+      {readOnly && (
+        <section className="glass border border-amber-500/20 bg-[rgba(245,158,11,0.08)] p-4">
+          <div className="flex items-start gap-3">
+            <span className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 text-amber-300">
+              <Lock size={16} />
+            </span>
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-amber-300">
+                // archived project
+              </p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                this board is read-only. filters and saved views still work, but edit flows are locked until you restore the project.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+      {currentProject && (
+        <>
+          <LabelFilterBar
+            testId="board-label-filter"
+            labels={projectLabels}
+            filters={filters}
+            title="Board Slice"
+            hint="focus the kanban lanes by label, priority and completion."
+            emptyText="no project labels available"
+            onChange={setFilters}
+          />
+          <ProjectViewManager
+            projectId={currentProject.id}
+            filters={filters}
+            onApply={setFilters}
+            readOnly={readOnly}
+          />
+          <BulkTaskActions
+            projectId={currentProject.id}
+            tasks={visibleTasks}
+            columns={columns}
+            readOnly={readOnly}
+          />
+          <ProjectLabelManager
+            projectId={currentProject.id}
+            onLabelsChanged={setProjectLabels}
+            readOnly={readOnly}
+          />
+        </>
+      )}
+      <KanbanBoard filters={filters} readOnly={readOnly} />
       <TaskDetailPanel />
     </div>
   );

@@ -2,24 +2,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Send, MessageSquare } from 'lucide-react';
 import { commentsApi } from '@/api/comments';
+import ErrorBanner from '@/components/common/ErrorBanner';
 import { formatRelativeTime } from '@/lib/utils';
 import type { Comment } from '@/types';
 
 interface TaskCommentsProps {
   taskId: string;
+  disabled?: boolean;
 }
 
-export default function TaskComments({ taskId }: TaskCommentsProps) {
+export default function TaskComments({ taskId, disabled = false }: TaskCommentsProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchComments = useCallback(async () => {
     try {
       const data = await commentsApi.listByTask(taskId);
       setComments(data);
-    } catch {
-      // Silently fail
+      setError(null);
+    } catch (err) {
+      setError((err as Error).message);
     }
   }, [taskId]);
 
@@ -35,9 +39,10 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
     try {
       await commentsApi.create({ task_id: taskId, content: newComment.trim() });
       setNewComment('');
+      setError(null);
       fetchComments();
-    } catch {
-      // Error handled elsewhere
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -46,28 +51,29 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <MessageSquare size={14} className="text-gray-400" />
-        <label className="text-xs font-medium text-gray-400">
+        <MessageSquare size={14} className="text-[var(--accent-primary)]" />
+        <label className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
           Comments ({comments.length})
         </label>
       </div>
+      {error && <ErrorBanner message={error} />}
 
       {/* Comments list */}
       <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
         {comments.length === 0 ? (
-          <p className="text-xs text-gray-600 text-center py-4">
-            No comments yet. Be the first to comment.
+          <p className="py-4 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+            no comments logged
           </p>
         ) : (
           comments.map((comment) => (
             <div
               key={comment.id}
-              className="p-3 rounded-lg bg-white/[0.03] border border-white/5"
+              className="surface-subtle p-3"
             >
-              <p className="text-sm text-gray-300 whitespace-pre-wrap">
+              <p className="whitespace-pre-wrap text-sm text-[var(--text-primary)]">
                 {comment.content}
               </p>
-              <p className="text-[10px] text-gray-600 mt-2">
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
                 {formatRelativeTime(comment.created_at)}
               </p>
             </div>
@@ -82,12 +88,13 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Write a comment..."
-          className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25"
+          disabled={disabled}
+          className="control-shell flex-1 rounded-lg px-3 py-2 text-sm outline-none"
         />
         <button
           type="submit"
-          disabled={!newComment.trim() || loading}
-          className="p-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          disabled={disabled || !newComment.trim() || loading}
+          className="button-primary rounded-lg p-2 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Send comment"
         >
           <Send size={16} />

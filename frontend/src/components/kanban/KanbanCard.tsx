@@ -44,6 +44,8 @@ export default function KanbanCard({ task, isOverlay = false }: KanbanCardProps)
     <motion.div
       ref={setNodeRef}
       style={style}
+      data-testid={`kanban-task-${task.id}`}
+      data-task-title={task.title}
       initial={false}
       whileHover={isOverlay ? undefined : { scale: 1.02, y: -1 }}
       className={cn(

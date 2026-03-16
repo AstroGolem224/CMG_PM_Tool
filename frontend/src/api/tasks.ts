@@ -1,6 +1,12 @@
 /** API calls for task management */
 import client from './client';
-import type { Task, CreateTaskPayload, UpdateTaskPayload, MoveTaskPayload } from '@/types';
+import type {
+  BulkTaskActionPayload,
+  CreateTaskPayload,
+  MoveTaskPayload,
+  Task,
+  UpdateTaskPayload,
+} from '@/types';
 
 export const tasksApi = {
   listByProject: (projectId: string) =>
@@ -23,4 +29,7 @@ export const tasksApi = {
 
   reorder: (data: { column_id: string; task_ids: string[] }) =>
     client.patch('/tasks/reorder', data).then((r) => r.data),
+
+  bulk: (projectId: string, data: BulkTaskActionPayload) =>
+    client.post<{ updated: number }>(`/projects/${projectId}/tasks/bulk`, data).then((r) => r.data),
 };

@@ -37,28 +37,35 @@ export default function Sidebar() {
       initial={false}
       animate={{ width: sidebarOpen ? 260 : 72 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
-      className="relative flex flex-col h-screen glass border-r border-white/10 z-20 shrink-0"
+      className="glass relative z-20 flex h-screen shrink-0 flex-col border-r border-[var(--glass-border)]"
     >
       {/* Logo & collapse toggle */}
-      <div className="flex items-center justify-between px-4 h-16 border-b border-white/10">
+      <div className="flex h-20 items-center justify-between border-b border-[var(--glass-border)] px-4">
         <AnimatePresence mode="wait">
           {sidebarOpen && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-3"
             >
-              <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
-                <FolderKanban size={18} className="text-white" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--glass-border-hot)] bg-[rgba(212,82,10,0.14)] shadow-[var(--glow-primary)]">
+                <FolderKanban size={18} className="text-[var(--accent-primary)]" />
               </div>
-              <span className="font-semibold text-white text-sm">CMG PM Tool</span>
+              <div>
+                <span className="block font-display text-xl uppercase tracking-[0.18em] text-[var(--accent-gold)]">
+                  cmg prism
+                </span>
+                <span className="block font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-secondary)]">
+                  // build // forge // play
+                </span>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
         <button
           onClick={toggleSidebar}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="rounded-lg p-1.5 text-[var(--text-secondary)] transition hover:bg-white/10 hover:text-[var(--text-primary)]"
           aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         >
           {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
@@ -74,10 +81,10 @@ export default function Sidebar() {
               key={path}
               onClick={() => navigate(path)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-primary-500/20 text-primary-400'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-[rgba(212,82,10,0.16)] text-[var(--accent-primary)] shadow-[inset_0_0_0_1px_var(--glass-border-hot)]'
+                  : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]'
               )}
             >
               <Icon size={20} />
@@ -87,7 +94,7 @@ export default function Sidebar() {
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: 'auto' }}
                     exit={{ opacity: 0, width: 0 }}
-                    className="whitespace-nowrap overflow-hidden"
+                    className="overflow-hidden whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.22em]"
                   >
                     {label}
                   </motion.span>
@@ -102,13 +109,13 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto mt-6 px-3">
         <div className="flex items-center justify-between mb-2 px-1">
           {sidebarOpen && (
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Projects
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+              project lanes
             </span>
           )}
           <button
             onClick={() => openModal('createProject')}
-            className="p-1 rounded text-gray-400 hover:text-primary-400 hover:bg-white/5 transition-colors"
+            className="rounded p-1 text-[var(--text-secondary)] transition hover:bg-white/5 hover:text-[var(--accent-primary)]"
             aria-label="New project"
           >
             <Plus size={16} />
@@ -122,10 +129,10 @@ export default function Sidebar() {
                 key={project.id}
                 onClick={() => navigate(`/projects/${project.id}`)}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left',
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
                   isActive
-                    ? 'bg-white/10 text-white'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                    ? 'bg-[rgba(255,255,255,0.08)] text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]'
                 )}
               >
                 <span
@@ -138,7 +145,7 @@ export default function Sidebar() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="truncate"
+                      className="truncate font-medium"
                     >
                       {project.name}
                     </motion.span>
