@@ -1,5 +1,6 @@
 /** Modal dialog for quickly creating a new task in a column */
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import ErrorBanner from '@/components/common/ErrorBanner';
@@ -50,9 +51,9 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -178,6 +179,7 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
           </form>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
