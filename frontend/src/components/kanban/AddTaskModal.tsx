@@ -3,11 +3,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { Repeat, X } from 'lucide-react';
 import ErrorBanner from '@/components/common/ErrorBanner';
+import { cn } from '@/lib/utils';
 import { useTaskStore } from '@/stores/taskStore';
 import { useProjectStore } from '@/stores/projectStore';
-import type { Priority } from '@/types';
+import type { Priority, RecurrenceType } from '@/types';
 
 interface AddTaskModalProps {
   columnId: string;
@@ -15,6 +16,14 @@ interface AddTaskModalProps {
 }
 
 const priorities: Priority[] = ['low', 'medium', 'high', 'urgent'];
+const recurrenceOptions: { value: RecurrenceType; label: string }[] = [
+  { value: 'none', label: 'None' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'custom_days', label: 'Custom (days)' },
+];
+const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
   const { createTask, error } = useTaskStore();
@@ -23,6 +32,9 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [deadline, setDeadline] = useState('');
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>('none');
+  const [recurrenceInterval, setRecurrenceInterval] = useState(1);
+  const [recurrenceDays, setRecurrenceDays] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +55,9 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
         description,
         priority,
         deadline: deadline || null,
+        recurrence_type: recurrenceType,
+        recurrence_interval: recurrenceType === 'custom_days' ? recurrenceInterval : 1,
+        recurrence_days: recurrenceType === 'weekly' ? recurrenceDays.join(',') : '',
       });
       onClose();
     } catch {
@@ -166,6 +181,67 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
                 onChange={(e) => setDeadline(e.target.value)}
                 className="control-shell w-full rounded-lg px-3 py-2 text-sm outline-none [color-scheme:dark]"
               />
+            </div>
+
+            {/* Recurrence */}
+            <div>
+              <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                <Repeat size={12} className="inline mr-1" />
+                Recurrence
+              </label>
+              <select
+                value={recurrenceType}
+                onChange={(e) => setRecurrenceType(e.target.value as RecurrenceType)}
+                className="control-shell w-full rounded-lg px-3 py-2 text-sm outline-none [color-scheme:dark]"
+              >
+                {recurrenceOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+
+              {recurrenceType === 'weekly' && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {weekdays.map((day, index) => {
+                    const dayValue = String(index + 1);
+                    const selected = recurrenceDays.includes(dayValue);
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() =>
+                          setRecurrenceDays((current) =>
+                            selected
+                              ? current.filter((item) => item !== dayValue)
+                              : [...current, dayValue].sort()
+                          )
+                        }
+                        className={cn(
+                          'rounded px-2 py-1 text-xs font-medium transition-colors',
+                          selected ? 'bg-[var(--accent-primary)] text-white' : 'button-ghost'
+                        )}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {recurrenceType === 'custom_days' && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs text-[var(--text-secondary)]">Every</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={recurrenceInterval}
+                    onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    className="control-shell w-20 rounded-lg px-2 py-1 text-center text-sm outline-none"
+                  />
+                  <span className="text-xs text-[var(--text-secondary)]">day(s)</span>
+                </div>
+              )}
             </div>
 
             {/* Actions */}

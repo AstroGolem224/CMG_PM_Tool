@@ -146,6 +146,10 @@ export interface CreateTaskPayload {
   description?: string;
   priority?: Priority;
   deadline?: string | null;
+  recurrence_type?: RecurrenceType;
+  recurrence_interval?: number;
+  recurrence_days?: string;
+  next_due_date?: string | null;
 }
 
 /** Payload for updating a task */

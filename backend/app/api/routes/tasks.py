@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
 from app.db import get_session
-from app.models import Column, ColumnKind, Comment, Label, RecurrenceType, Task, TaskLabelLink
+from app.models import ColumnKind, Comment, Label, RecurrenceType, Task, TaskLabelLink
 from app.schemas import (
     CommentRead,
     TaskBulkAction,
@@ -67,6 +67,16 @@ def create_task(payload: TaskCreate, session: Session = Depends(get_session)) ->
     last_task = session.exec(
         select(Task).where(Task.column_id == payload.column_id).order_by(Task.position.desc())
     ).first()
+    recurrence_type = payload.recurrence_type or RecurrenceType.NONE
+    recurrence_interval = max(payload.recurrence_interval, 1)
+    recurrence_days = payload.recurrence_days
+    next_due_date = None
+    if recurrence_type != RecurrenceType.NONE:
+        next_due_date = payload.deadline or compute_next_due_date(
+            recurrence_type,
+            recurrence_interval,
+            recurrence_days=recurrence_days,
+        )
     task = Task(
         project_id=payload.project_id,
         column_id=payload.column_id,
@@ -74,6 +84,10 @@ def create_task(payload: TaskCreate, session: Session = Depends(get_session)) ->
         description=payload.description,
         priority=payload.priority,
         deadline=payload.deadline,
+        recurrence_type=recurrence_type,
+        recurrence_interval=recurrence_interval,
+        recurrence_days=recurrence_days,
+        next_due_date=payload.next_due_date or next_due_date,
         position=0 if not last_task else last_task.position + 1,
     )
     session.add(task)
@@ -99,8 +113,28 @@ def update_task(task_id: str, payload: TaskUpdate, session: Session = Depends(ge
     project = get_project_or_404(session, task.project_id)
     ensure_active_project(project)
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    changes = payload.model_dump(exclude_unset=True)
+    for field, value in changes.items():
         setattr(task, field, value)
+    if {
+        "deadline",
+        "recurrence_type",
+        "recurrence_interval",
+        "recurrence_days",
+        "next_due_date",
+    } & set(changes):
+        if task.recurrence_type == RecurrenceType.NONE:
+            task.recurrence_days = ""
+            task.next_due_date = None
+        else:
+            if task.recurrence_type != RecurrenceType.WEEKLY:
+                task.recurrence_days = ""
+            if "next_due_date" not in changes:
+                task.next_due_date = task.deadline or compute_next_due_date(
+                    task.recurrence_type,
+                    max(task.recurrence_interval, 1),
+                    recurrence_days=task.recurrence_days,
+                )
     touch(task)
     touch(project)
     session.add(task)

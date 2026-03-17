@@ -9,16 +9,40 @@ from sqlmodel import Session, select
 from app.models import Column, ColumnKind, RecurrenceType, Task
 
 
+def _parse_recurrence_days(raw_value: str) -> list[int]:
+    days: list[int] = []
+    for item in raw_value.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        try:
+            day = int(item)
+        except ValueError:
+            continue
+        if 1 <= day <= 7 and day not in days:
+            days.append(day)
+    return sorted(days)
+
+
 def compute_next_due_date(
     recurrence_type: str,
     interval: int,
     base: datetime | None = None,
+    recurrence_days: str = "",
 ) -> datetime | None:
     """Return the next due date based on recurrence settings."""
     now = base or datetime.now(timezone.utc)
     if recurrence_type == RecurrenceType.DAILY:
         return now + timedelta(days=interval)
     if recurrence_type == RecurrenceType.WEEKLY:
+        weekdays = _parse_recurrence_days(recurrence_days)
+        if weekdays:
+            min_offset = ((max(interval, 1) - 1) * 7) + 1
+            max_offset = max(interval, 1) * 7
+            for offset in range(min_offset, max_offset + 1):
+                candidate = now + timedelta(days=offset)
+                if candidate.isoweekday() in weekdays:
+                    return candidate
         return now + timedelta(weeks=interval)
     if recurrence_type == RecurrenceType.MONTHLY:
         month = now.month + interval
@@ -61,6 +85,7 @@ def clone_recurring_task(session: Session, original: Task) -> Task:
     next_due = compute_next_due_date(
         original.recurrence_type,
         original.recurrence_interval,
+        recurrence_days=original.recurrence_days,
     )
 
     clone = Task(

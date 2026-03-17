@@ -90,15 +90,23 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   moveTask: async (id, data) => {
     set({ error: null });
+    const projectId = get().tasks.find((t) => t.id === id)?.project_id;
     get().optimisticMove(id, data.column_id, data.position);
     try {
-      await tasksApi.move(id, data);
+      const updated = await tasksApi.move(id, data);
+      set((state) => ({
+        tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updated } : t)),
+        selectedTask: state.selectedTask?.id === id ? { ...state.selectedTask, ...updated } : state.selectedTask,
+        error: null,
+      }));
+      if (projectId) {
+        await get().fetchTasks(projectId);
+      }
     } catch (e) {
       set({ error: (e as Error).message });
       // Refetch on failure to restore correct state
-      const task = get().tasks.find((t) => t.id === id);
-      if (task) {
-        await get().fetchTasks(task.project_id);
+      if (projectId) {
+        await get().fetchTasks(projectId);
       }
       throw e;
     }

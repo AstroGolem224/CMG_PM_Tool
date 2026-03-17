@@ -55,7 +55,15 @@ def _update_label(client, label_id, name="backend-updated"):
     return response.json()
 
 
-def _create_task(client, project_id, column_id, title="Build API", deadline=None, priority="high"):
+def _create_task(
+    client,
+    project_id,
+    column_id,
+    title="Build API",
+    deadline=None,
+    priority="high",
+    **extra,
+):
     response = client.post(
         "/api/tasks",
         json={
@@ -65,6 +73,7 @@ def _create_task(client, project_id, column_id, title="Build API", deadline=None
             "description": "task description",
             "priority": priority,
             "deadline": deadline,
+            **extra,
         },
     )
     assert response.status_code == 201
@@ -197,6 +206,40 @@ def test_task_move_labels_comments_and_dashboard(client):
 
     delete_label_response = client.delete(f"/api/labels/{label['id']}")
     assert delete_label_response.status_code == 204
+
+
+def test_recurring_task_move_spawns_clone_and_preserves_weekdays(client):
+    project = _create_project(client, name="Recurring Project")
+    project_detail = client.get(f"/api/projects/{project['id']}").json()
+    columns = {column["name"]: column for column in project_detail["columns"]}
+
+    recurring_task = _create_task(
+        client,
+        project["id"],
+        columns["Backlog"]["id"],
+        title="Weekly Standup",
+        priority="medium",
+        recurrence_type="weekly",
+        recurrence_interval=1,
+        recurrence_days="2,4",
+    )
+
+    move_response = client.patch(
+        f"/api/tasks/{recurring_task['id']}/move",
+        json={"column_id": columns["Done"]["id"], "position": 0},
+    )
+    assert move_response.status_code == 200
+    assert move_response.json()["title"].startswith("✅ ")
+
+    tasks = client.get(f"/api/projects/{project['id']}/tasks").json()
+    assert len(tasks) == 2
+
+    backlog_clone = next(task for task in tasks if task["column_id"] == columns["Backlog"]["id"])
+    assert backlog_clone["title"] == "Weekly Standup"
+    assert backlog_clone["recurrence_type"] == "weekly"
+    assert backlog_clone["recurrence_days"] == "2,4"
+    assert backlog_clone["deadline"] is not None
+    assert datetime.fromisoformat(backlog_clone["deadline"]).isoweekday() in {2, 4}
 
 
 def test_project_delete_cascades(client):

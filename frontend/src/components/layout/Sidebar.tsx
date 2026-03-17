@@ -34,8 +34,10 @@ export default function Sidebar({ mobile = false }: SidebarProps) {
   const { sidebarOpen, toggleSidebar, mobileMenuOpen, setMobileMenuOpen, openModal } = useUIStore();
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    if (!mobile) {
+      fetchProjects();
+    }
+  }, [fetchProjects, mobile]);
 
   // Close mobile menu on route change
   useEffect(() => {
