@@ -21,6 +21,14 @@ class TaskPriority:
     URGENT = "urgent"
 
 
+class RecurrenceType:
+    NONE = "none"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    CUSTOM_DAYS = "custom_days"
+
+
 class ColumnKind:
     BACKLOG = "backlog"
     IN_PROGRESS = "in_progress"
@@ -89,6 +97,10 @@ class Task(TimestampedModel, table=True):
     priority: str = Field(default=TaskPriority.MEDIUM, nullable=False)
     position: int = Field(default=0, nullable=False, index=True)
     deadline: Optional[datetime] = Field(default=None)
+    recurrence_type: str = Field(default="none", nullable=False)
+    recurrence_interval: int = Field(default=1, nullable=False)
+    recurrence_days: str = Field(default="", nullable=False)
+    next_due_date: Optional[datetime] = Field(default=None)
 
     project: Project = Relationship(back_populates="tasks")
     column: Column = Relationship(back_populates="tasks")

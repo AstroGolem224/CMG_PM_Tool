@@ -113,6 +113,10 @@ class TaskCreate(SQLModel):
     description: str = ""
     priority: str = "medium"
     deadline: datetime | None = None
+    recurrence_type: str = "none"
+    recurrence_interval: int = 1
+    recurrence_days: str = ""
+    next_due_date: datetime | None = None
 
 
 class TaskUpdate(SQLModel):
@@ -120,6 +124,10 @@ class TaskUpdate(SQLModel):
     description: Optional[str] = None
     priority: Optional[str] = None
     deadline: datetime | None = None
+    recurrence_type: Optional[str] = None
+    recurrence_interval: Optional[int] = None
+    recurrence_days: Optional[str] = None
+    next_due_date: datetime | None = None
 
 
 class TaskMove(SQLModel):
@@ -152,6 +160,10 @@ class TaskRead(SQLModel):
     priority: str
     position: int
     deadline: datetime | None = None
+    recurrence_type: str = "none"
+    recurrence_interval: int = 1
+    recurrence_days: str = ""
+    next_due_date: datetime | None = None
     created_at: datetime
     updated_at: datetime
     labels: list[LabelRead] | None = None

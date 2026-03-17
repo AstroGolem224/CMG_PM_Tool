@@ -40,6 +40,11 @@ app.add_middleware(
 )
 
 
+@app.get("/api")
+@app.get("/api/")
+def api_root() -> dict[str, str]:
+    return {"status": "ok", "service": "cmg-pm-tool"}
+
 @app.get("/api/health")
 def healthcheck() -> dict[str, str]:
     return {"status": "ok"}

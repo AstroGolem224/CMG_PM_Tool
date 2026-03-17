@@ -2,7 +2,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
-import { Calendar, GripVertical } from 'lucide-react';
+import { Calendar, GripVertical, Repeat } from 'lucide-react';
 import { cn, priorityColors, formatDate, isOverdue, isUpcoming } from '@/lib/utils';
 import { useTaskStore } from '@/stores/taskStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -31,7 +31,7 @@ export default function KanbanCard({ task, isOverlay = false }: KanbanCardProps)
     transition,
   };
 
-  const priorityStyle = priorityColors[task.priority];
+  const priorityStyle = priorityColors[task.priority] || priorityColors.medium;
   const overdue = isOverdue(task.deadline);
   const upcoming = isUpcoming(task.deadline);
 
@@ -69,6 +69,9 @@ export default function KanbanCard({ task, isOverlay = false }: KanbanCardProps)
         <div className="flex-1 min-w-0">
           {/* Title */}
           <p className="text-sm font-medium text-gray-200 mb-1.5 line-clamp-2">
+            {task.recurrence_type && task.recurrence_type !== 'none' && (
+              <Repeat size={12} className="inline mr-1 text-blue-400" aria-label="Recurring task" />
+            )}
             {task.title}
           </p>
 

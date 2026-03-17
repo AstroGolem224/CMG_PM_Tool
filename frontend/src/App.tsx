@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import ToastViewport from '@/components/common/ToastViewport';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import MainLayout from '@/components/layout/MainLayout';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { useUIStore } from '@/stores/uiStore';
@@ -29,6 +30,7 @@ export default function App() {
   }, [theme]);
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
@@ -36,6 +38,7 @@ export default function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:id" element={<KanbanPage />} />
+            <Route path="/projects/:id/board" element={<KanbanPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Routes>
@@ -49,5 +52,6 @@ export default function App() {
       </AnimatePresence>
       <ToastViewport />
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }

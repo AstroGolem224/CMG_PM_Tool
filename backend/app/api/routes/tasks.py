@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
 from app.db import get_session
-from app.models import Comment, Label, Task, TaskLabelLink
+from app.models import Column, ColumnKind, Comment, Label, RecurrenceType, Task, TaskLabelLink
 from app.schemas import (
     CommentRead,
     TaskBulkAction,
@@ -26,6 +26,7 @@ from app.services.board import (
     normalize_positions,
     touch,
 )
+from app.services.recurrence import compute_next_due_date, clone_recurring_task
 
 
 router = APIRouter(tags=["tasks"])
@@ -139,12 +140,36 @@ def move_task(task_id: str, payload: TaskMove, session: Session = Depends(get_se
     touch(project)
     session.add(project)
     record_event(session, action="moved task", project=project, task=task)
+
+    # Auto-respawn recurring task when moved to a Done column
+    if (
+        target_column.kind == ColumnKind.DONE
+        and task.recurrence_type
+        and task.recurrence_type != RecurrenceType.NONE
+    ):
+        clone = clone_recurring_task(session, task)
+        if not task.title.startswith("\u2705"):
+            task.title = f"\u2705 {task.title}"
+        session.add(task)
+        record_event(session, action="spawned recurring task", project=project, task=clone)
+
     session.commit()
 
     normalize_positions(session, source_column_id)
     normalize_positions(session, target_column.id)
     session.commit()
     return session.exec(_task_statement(task.id)).one()
+
+
+@router.get("/projects/{project_id}/recurring", response_model=list[TaskRead])
+def list_recurring_tasks(project_id: str, session: Session = Depends(get_session)) -> list[Task]:
+    get_project_or_404(session, project_id)
+    return session.exec(
+        select(Task)
+        .where(Task.project_id == project_id, Task.recurrence_type != RecurrenceType.NONE)
+        .options(selectinload(Task.labels))
+        .order_by(Task.next_due_date, Task.created_at)
+    ).all()
 
 
 @router.patch("/tasks/reorder", status_code=status.HTTP_204_NO_CONTENT)

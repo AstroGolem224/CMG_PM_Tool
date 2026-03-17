@@ -20,7 +20,7 @@ const MIME = {
   '.woff': 'font/woff',
 };
 
-function serveFile(filePath, res) {
+function serveFile(filePath, res, noCache = false) {
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -29,7 +29,17 @@ function serveFile(filePath, res) {
     }
     const ext  = path.extname(filePath).toLowerCase();
     const mime = MIME[ext] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': mime });
+    const headers = { 'Content-Type': mime };
+    // index.html and SPA fallback: never cache (always revalidate)
+    if (noCache || path.basename(filePath) === 'index.html') {
+      headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      headers['Pragma'] = 'no-cache';
+      headers['Expires'] = '0';
+    } else {
+      // Hashed assets: cache aggressively
+      headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+    }
+    res.writeHead(200, headers);
     res.end(data);
   });
 }

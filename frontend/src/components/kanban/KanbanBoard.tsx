@@ -182,7 +182,7 @@ export default function KanbanBoard({ filters, readOnly = false }: KanbanBoardPr
       {/* M4: horizontal scroll with snap on mobile */}
       <div
         ref={scrollRef}
-        className="flex gap-4 md:gap-5 h-full overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none"
+        className="flex gap-4 md:gap-5 items-start overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none"
       >
         <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
           {sortedColumns.map((column) => (

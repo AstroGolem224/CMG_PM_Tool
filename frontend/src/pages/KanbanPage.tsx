@@ -77,7 +77,7 @@ export default function KanbanPage() {
   }
 
   return (
-    <div className="h-full space-y-4">
+    <div className="space-y-4">
       {(projectError || taskError) && (
         <ErrorBanner message={projectError ?? taskError ?? 'Failed to load kanban data.'} />
       )}

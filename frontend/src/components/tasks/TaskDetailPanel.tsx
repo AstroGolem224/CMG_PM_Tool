@@ -2,7 +2,7 @@
  *  Desktop: slides in from right. Mobile (<md): full-screen slide-up with back button. */
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, Trash2, Calendar } from 'lucide-react';
+import { ArrowLeft, X, Trash2, Calendar, Repeat } from 'lucide-react';
 import { cn, priorityColors, priorityLabels } from '@/lib/utils';
 import ErrorBanner from '@/components/common/ErrorBanner';
 import TaskLabels from './TaskLabels';
@@ -11,9 +11,17 @@ import { useTaskStore } from '@/stores/taskStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 import { tasksApi } from '@/api/tasks';
-import type { Priority, Task } from '@/types';
+import type { Priority, RecurrenceType, Task } from '@/types';
 
 const priorities: Priority[] = ['low', 'medium', 'high', 'urgent'];
+const recurrenceOptions: { value: RecurrenceType; label: string }[] = [
+  { value: 'none', label: 'None' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'custom_days', label: 'Custom (days)' },
+];
+const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function TaskDetailPanel() {
   const { selectedTask, setSelectedTask, replaceTask, updateTask, deleteTask, error } = useTaskStore();
@@ -97,7 +105,7 @@ export default function TaskDetailPanel() {
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             data-testid="task-detail-panel"
-            className="fixed right-0 top-0 bottom-0 z-50 hidden md:flex w-full max-w-lg flex-col border-l border-[var(--glass-border)] glass shadow-2xl"
+            className="fixed right-0 top-0 bottom-0 z-[9999] hidden md:flex w-full max-w-lg flex-col border-l border-[var(--glass-border)] glass shadow-2xl"
           >
             {/* Desktop header */}
             <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-6 py-4">
@@ -163,7 +171,7 @@ export default function TaskDetailPanel() {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-0 z-50 flex md:hidden flex-col glass"
+            className="fixed inset-0 z-[9999] flex md:hidden flex-col glass"
           >
             {/* Mobile header with back button */}
             <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-4 py-3">
@@ -349,6 +357,80 @@ function TaskDetailContent({
           disabled={readOnly}
           className="control-shell w-full rounded-lg px-3 py-2 text-sm outline-none [color-scheme:dark]"
         />
+      </div>
+
+      {/* Recurrence */}
+      <div>
+        <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          <Repeat size={12} className="inline mr-1" />
+          Recurrence
+        </label>
+        <select
+          value={task.recurrence_type ?? 'none'}
+          onChange={(e) => {
+            if (readOnly || !selectedTask) return;
+            const val = e.target.value as RecurrenceType;
+            onUpdate(selectedTask.id, { recurrence_type: val, recurrence_interval: val === 'none' ? 1 : (task.recurrence_interval || 1) });
+          }}
+          disabled={readOnly}
+          className="control-shell w-full rounded-lg px-3 py-2 text-sm outline-none [color-scheme:dark]"
+        >
+          {recurrenceOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+
+        {/* Weekly: day-of-week picker */}
+        {(task.recurrence_type === 'weekly') && (
+          <div className="mt-2 flex gap-1.5 flex-wrap">
+            {weekdays.map((day, i) => {
+              const selected = (task.recurrence_days ?? '').split(',').includes(String(i + 1));
+              return (
+                <button
+                  key={day}
+                  disabled={readOnly}
+                  onClick={() => {
+                    if (readOnly || !selectedTask) return;
+                    const current = (task.recurrence_days ?? '').split(',').filter(Boolean);
+                    const dayStr = String(i + 1);
+                    const next = selected
+                      ? current.filter((d) => d !== dayStr)
+                      : [...current, dayStr];
+                    onUpdate(selectedTask.id, { recurrence_days: next.sort().join(',') });
+                  }}
+                  className={cn(
+                    'px-2 py-1 rounded text-xs font-medium transition-colors',
+                    selected
+                      ? 'bg-[var(--accent-primary)] text-white'
+                      : 'button-ghost'
+                  )}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Custom: interval input */}
+        {(task.recurrence_type === 'custom_days') && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-xs text-[var(--text-secondary)]">Every</span>
+            <input
+              type="number"
+              min={1}
+              value={task.recurrence_interval ?? 1}
+              onChange={(e) => {
+                if (readOnly || !selectedTask) return;
+                const val = Math.max(1, parseInt(e.target.value) || 1);
+                onUpdate(selectedTask.id, { recurrence_interval: val });
+              }}
+              disabled={readOnly}
+              className="control-shell w-20 rounded-lg px-2 py-1 text-sm outline-none text-center"
+            />
+            <span className="text-xs text-[var(--text-secondary)]">day(s)</span>
+          </div>
+        )}
       </div>
 
       {/* Labels */}

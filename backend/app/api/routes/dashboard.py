@@ -189,6 +189,20 @@ def get_upcoming_deadlines(
     return items
 
 
+def _deduplicate_activity(events: list[ActivityEvent]) -> list[ActivityEvent]:
+    """Keep only the most recent event per (task_id, action) pair.
+    Events are expected to be ordered by timestamp DESC (newest first).
+    """
+    seen: set[tuple[str | None, str]] = set()
+    deduped: list[ActivityEvent] = []
+    for event in events:
+        key = (event.task_id, event.action)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(event)
+    return deduped
+
+
 @router.get("/activity", response_model=list[ActivityItem])
 def get_recent_activity(
     label_ids: str | None = Query(default=None),
@@ -218,7 +232,10 @@ def get_recent_activity(
             return []
         statement = statement.where(ActivityEvent.task_id.in_(matching_task_ids))
 
-    return session.exec(statement.order_by(ActivityEvent.timestamp.desc()).limit(20)).all()
+    # Fetch more than needed so dedup has enough to work with
+    raw_events = session.exec(statement.order_by(ActivityEvent.timestamp.desc()).limit(60)).all()
+    deduped = _deduplicate_activity(raw_events)
+    return deduped[:20]
 
 
 @router.get("/labels", response_model=list[DashboardLabelItem])

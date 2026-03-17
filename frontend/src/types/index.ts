@@ -28,6 +28,9 @@ export interface Column {
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskCompletionFilter = 'all' | 'open' | 'done';
 
+/** Recurrence types for repeating tasks */
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom_days';
+
 /** Task entity */
 export interface Task {
   id: string;
@@ -38,6 +41,10 @@ export interface Task {
   priority: Priority;
   position: number;
   deadline: string | null;
+  recurrence_type: RecurrenceType;
+  recurrence_interval: number;
+  recurrence_days: string;
+  next_due_date: string | null;
   created_at: string;
   updated_at: string;
   labels?: Label[];
@@ -147,6 +154,10 @@ export interface UpdateTaskPayload {
   description?: string;
   priority?: Priority;
   deadline?: string | null;
+  recurrence_type?: RecurrenceType;
+  recurrence_interval?: number;
+  recurrence_days?: string;
+  next_due_date?: string | null;
 }
 
 /** Payload for moving a task between columns */
