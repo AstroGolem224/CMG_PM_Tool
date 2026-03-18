@@ -50,6 +50,24 @@ def _project_tasks_statement(project_id: str):
     )
 
 
+def _apply_done_move_side_effects(
+    session: Session,
+    project,
+    task: Task,
+    target_column_kind: str,
+) -> None:
+    if target_column_kind != ColumnKind.DONE:
+        return
+    if not task.recurrence_type or task.recurrence_type == RecurrenceType.NONE:
+        return
+
+    clone = clone_recurring_task(session, task)
+    if not task.title.startswith("\u2705"):
+        task.title = f"\u2705 {task.title}"
+    session.add(task)
+    record_event(session, action="spawned recurring task", project=project, task=clone)
+
+
 @router.get("/projects/{project_id}/tasks", response_model=list[TaskRead])
 def list_project_tasks(project_id: str, session: Session = Depends(get_session)) -> list[Task]:
     get_project_or_404(session, project_id)
@@ -174,18 +192,7 @@ def move_task(task_id: str, payload: TaskMove, session: Session = Depends(get_se
     touch(project)
     session.add(project)
     record_event(session, action="moved task", project=project, task=task)
-
-    # Auto-respawn recurring task when moved to a Done column
-    if (
-        target_column.kind == ColumnKind.DONE
-        and task.recurrence_type
-        and task.recurrence_type != RecurrenceType.NONE
-    ):
-        clone = clone_recurring_task(session, task)
-        if not task.title.startswith("\u2705"):
-            task.title = f"\u2705 {task.title}"
-        session.add(task)
-        record_event(session, action="spawned recurring task", project=project, task=clone)
+    _apply_done_move_side_effects(session, project, task, target_column.kind)
 
     session.commit()
 
@@ -261,6 +268,7 @@ def bulk_task_action(
             insert_task_at_position(session, task, payload.column_id, next_position)
             next_position += 1
             record_event(session, action="moved task", project=project, task=task)
+            _apply_done_move_side_effects(session, project, task, target_column.kind)
         touch(project)
         session.add(project)
         session.commit()

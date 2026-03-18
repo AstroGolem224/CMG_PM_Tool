@@ -1,6 +1,13 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+
+import pytest
+from sqlalchemy.exc import IntegrityError
+from sqlmodel import Session
+
+from app.models import ProjectView
+from conftest import test_engine
 
 
 def _create_project(client, name="Test Project"):
@@ -229,7 +236,7 @@ def test_recurring_task_move_spawns_clone_and_preserves_weekdays(client):
         json={"column_id": columns["Done"]["id"], "position": 0},
     )
     assert move_response.status_code == 200
-    assert move_response.json()["title"].startswith("✅ ")
+    assert move_response.json()["title"].startswith("\u2705 ")
 
     tasks = client.get(f"/api/projects/{project['id']}/tasks").json()
     assert len(tasks) == 2
@@ -403,6 +410,37 @@ def test_project_views_roundtrip(client):
     assert [view["id"] for view in remaining] == [first_view["id"]]
 
 
+def test_project_view_database_constraints(client):
+    project = _create_project(client, name="Constrained Views Project")
+    first_view = _create_view(client, project["id"], name="Primary View")
+
+    with Session(test_engine) as session:
+        session.add(
+            ProjectView(
+                project_id=project["id"],
+                name=first_view["name"],
+                is_pinned=False,
+                is_default=False,
+                position=1,
+            )
+        )
+        with pytest.raises(IntegrityError):
+            session.commit()
+        session.rollback()
+
+        session.add(
+            ProjectView(
+                project_id=project["id"],
+                name="Second Default",
+                is_pinned=True,
+                is_default=True,
+                position=1,
+            )
+        )
+        with pytest.raises(IntegrityError):
+            session.commit()
+
+
 def test_bulk_task_actions(client):
     project = _create_project(client, name="Bulk Project")
     project_detail = client.get(f"/api/projects/{project['id']}").json()
@@ -447,3 +485,48 @@ def test_bulk_task_actions(client):
     assert delete_response.status_code == 200
     assert delete_response.json()["updated"] == 2
     assert client.get(f"/api/projects/{project['id']}/tasks").json() == []
+
+
+def test_bulk_task_move_to_done_spawns_recurring_clone(client):
+    project = _create_project(client, name="Bulk Recurring Project")
+    project_detail = client.get(f"/api/projects/{project['id']}").json()
+    columns = {column["name"]: column for column in project_detail["columns"]}
+
+    recurring_task = _create_task(
+        client,
+        project["id"],
+        columns["Backlog"]["id"],
+        title="Recurring Bulk Task",
+        recurrence_type="weekly",
+        recurrence_interval=1,
+        recurrence_days="1,3",
+    )
+    normal_task = _create_task(
+        client,
+        project["id"],
+        columns["Backlog"]["id"],
+        title="Normal Bulk Task",
+    )
+
+    move_response = client.post(
+        f"/api/projects/{project['id']}/tasks/bulk",
+        json={
+            "task_ids": [recurring_task["id"], normal_task["id"]],
+            "operation": "move",
+            "column_id": columns["Done"]["id"],
+        },
+    )
+    assert move_response.status_code == 200
+    assert move_response.json()["updated"] == 2
+
+    tasks = client.get(f"/api/projects/{project['id']}/tasks").json()
+    assert len(tasks) == 3
+
+    backlog_clone = next(task for task in tasks if task["title"] == "Recurring Bulk Task")
+    assert backlog_clone["column_id"] == columns["Backlog"]["id"]
+    assert backlog_clone["recurrence_days"] == "1,3"
+
+    done_recurring = next(task for task in tasks if task["id"] == recurring_task["id"])
+    assert done_recurring["column_id"] == columns["Done"]["id"]
+    assert done_recurring["title"].startswith("\u2705 ")
+

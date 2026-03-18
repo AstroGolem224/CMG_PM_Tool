@@ -36,6 +36,13 @@ export default function BulkTaskActions({
     };
   }, []);
 
+  useEffect(() => {
+    setTargetColumnId((current) => {
+      if (!columns.length) return '';
+      return columns.some((column) => column.id === current) ? current : columns[0].id;
+    });
+  }, [columns, projectId]);
+
   const taskIds = useMemo(() => tasks.map((task) => task.id), [tasks]);
   const count = taskIds.length;
 

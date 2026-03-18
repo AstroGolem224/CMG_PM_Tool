@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
+from sqlalchemy import Index, UniqueConstraint, text
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -122,6 +123,16 @@ class Label(SQLModel, table=True):
 
 
 class ProjectView(TimestampedModel, table=True):
+    __table_args__ = (
+        UniqueConstraint("project_id", "name", name="uq_project_view_project_name"),
+        Index(
+            "ix_project_view_single_default",
+            "project_id",
+            unique=True,
+            sqlite_where=text("is_default = 1"),
+        ),
+    )
+
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     project_id: str = Field(foreign_key="project.id", nullable=False, index=True, ondelete="CASCADE")
     name: str

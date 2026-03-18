@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from app.db import get_session
@@ -95,6 +96,21 @@ def _set_default_view(session: Session, project_id: str, view_id: str | None) ->
             view.position = _next_view_position(session, project_id, True)
             touch(view)
             session.add(view)
+
+
+def _raise_project_view_integrity_error(session: Session, exc: IntegrityError) -> None:
+    session.rollback()
+    message = str(getattr(exc, "orig", exc)).lower()
+    if (
+        "projectview.project_id, projectview.name" in message
+        or "project_view.project_id, project_view.name" in message
+    ):
+        detail = "View name already exists"
+    elif "projectview.project_id" in message or "project_view.project_id" in message:
+        detail = "Project already has a default view"
+    else:
+        detail = "View could not be saved"
+    raise HTTPException(status_code=400, detail=detail) from exc
 
 
 def _ensure_done_column_guardrail(
@@ -278,10 +294,10 @@ def create_project_view(
     touch(project)
     session.add(project)
     session.add(view)
-    session.commit()
-    if is_default:
-        _set_default_view(session, project_id, view.id)
+    try:
         session.commit()
+    except IntegrityError as exc:
+        _raise_project_view_integrity_error(session, exc)
     session.refresh(view)
     return _serialize_view(view)
 
@@ -342,7 +358,10 @@ def update_project_view(
         _set_default_view(session, project_id, view.id)
     elif "is_default" in updates and not next_default:
         _set_default_view(session, project_id, None)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        _raise_project_view_integrity_error(session, exc)
     if previous_group != next_pinned:
         _normalize_view_positions(session, project_id, previous_group)
         _normalize_view_positions(session, project_id, next_pinned)
