@@ -164,6 +164,7 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
                     key={p}
                     type="button"
                     onClick={() => setPriority(p)}
+                    aria-pressed={priority === p}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
                       priority === p
                         ? p === 'low'
@@ -230,6 +231,7 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
                       <button
                         key={day}
                         type="button"
+                        aria-pressed={selected}
                         onClick={() =>
                           setRecurrenceDays((current) =>
                             selected

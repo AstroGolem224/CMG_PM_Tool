@@ -116,14 +116,22 @@ export default function TaskDetailPanel() {
               className="fixed inset-0 z-[9999] flex flex-col glass"
             >
               <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-4 py-3">
-                <button
-                  onClick={handleClose}
-                  className="flex items-center gap-2 rounded-lg p-2 text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
-                  aria-label="Back"
-                >
-                  <ArrowLeft size={20} />
-                  <span className="font-mono text-[11px] uppercase tracking-[0.18em]">Back</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleClose}
+                    className="flex items-center gap-2 rounded-lg p-2 text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+                    aria-label="Back"
+                  >
+                    <ArrowLeft size={20} />
+                    <span className="font-mono text-[11px] uppercase tracking-[0.18em]">Back</span>
+                  </button>
+                  <div>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                      // task detail
+                    </p>
+                    <h2 id="task-detail-title" className="panel-heading mt-1">Task Details</h2>
+                  </div>
+                </div>
                 <button
                   onClick={handleDelete}
                   disabled={readOnly}
@@ -321,6 +329,7 @@ function TaskDetailContent({
                   }
                 }}
                 disabled={readOnly}
+                aria-pressed={priority === value}
                 className={cn(
                   'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                   priority === value ? `${style.bg} ${style.text} ring-1 ring-white/10` : 'button-ghost'
@@ -391,6 +400,7 @@ function TaskDetailContent({
                 <button
                   key={day}
                   disabled={readOnly}
+                  aria-pressed={selected}
                   onClick={() => {
                     if (readOnly || !selectedTask) return;
                     const current = (task.recurrence_days ?? '').split(',').filter(Boolean);

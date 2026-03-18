@@ -15,9 +15,9 @@ vi.mock('@/api/tasks', () => ({
       priority: 'medium',
       position: 0,
       deadline: null,
-      recurrence_type: 'none',
+      recurrence_type: 'weekly',
       recurrence_interval: 1,
-      recurrence_days: '',
+      recurrence_days: '1',
       next_due_date: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -37,6 +37,20 @@ vi.mock('@/components/tasks/TaskComments', () => ({
 
 describe('TaskDetailPanel', () => {
   beforeEach(() => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(max-width: 767px)',
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+
     useTaskStore.setState({
       tasks: [],
       selectedTask: {
@@ -48,9 +62,9 @@ describe('TaskDetailPanel', () => {
         priority: 'medium',
         position: 0,
         deadline: null,
-        recurrence_type: 'none',
+        recurrence_type: 'weekly',
         recurrence_interval: 1,
-        recurrence_days: '',
+        recurrence_days: '1',
         next_due_date: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -76,7 +90,21 @@ describe('TaskDetailPanel', () => {
       loading: false,
       error: null,
     });
-    useUIStore.setState({ taskDetailOpen: true, sidebarOpen: true, activeView: 'dashboard', modalType: null, modalData: {} });
+    useUIStore.setState({
+      taskDetailOpen: true,
+      sidebarOpen: true,
+      mobileMenuOpen: false,
+      activeView: 'dashboard',
+      modalType: null,
+      modalData: {},
+      theme: 'ember',
+      toasts: [],
+      boardViewContext: {
+        projectId: null,
+        activeViewName: null,
+        defaultViewName: null,
+      },
+    });
   });
 
   it('saves changed title through the store action', async () => {
@@ -110,5 +138,15 @@ describe('TaskDetailPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
     await waitFor(() => expect(updateTask).not.toHaveBeenCalled());
+  });
+
+  it('gives the mobile dialog an accessible name and exposes toggle state', async () => {
+    window.innerWidth = 375;
+
+    render(<TaskDetailPanel />);
+
+    expect(await screen.findByRole('dialog', { name: /task details/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /medium/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Mon' })).toHaveAttribute('aria-pressed', 'true');
   });
 });

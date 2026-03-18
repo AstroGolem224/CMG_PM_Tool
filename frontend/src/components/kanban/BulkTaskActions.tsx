@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRightLeft, Flame, Trash2 } from 'lucide-react';
+import CollapsiblePanel from '@/components/common/CollapsiblePanel';
 import ErrorBanner from '@/components/common/ErrorBanner';
 import { useTaskStore } from '@/stores/taskStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -136,94 +137,92 @@ export default function BulkTaskActions({
 
   return (
     <section className="glass p-4" data-testid="bulk-task-actions">
-      {error && <ErrorBanner message={error} />}
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-            // bulk slice ops
-          </p>
-          <h2 className="panel-heading mt-1 text-lg">Bulk Actions</h2>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            apply actions to the current filtered slice. active count: {count}
-          </p>
-        </div>
-      </div>
+      <CollapsiblePanel
+        eyebrow="// bulk slice ops"
+        title="Bulk Actions"
+        description={`apply actions to the current filtered slice. active count: ${count}`}
+        storageKey={`board:${projectId}:bulk-slice-ops`}
+        contentClassName="mt-4"
+      >
+        <>
+          {error && <ErrorBanner message={error} />}
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="surface-subtle rounded-2xl p-3">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                move slice
+              </p>
+              <select
+                data-testid="bulk-move-select"
+                value={targetColumnId}
+                onChange={(event) => setTargetColumnId(event.target.value)}
+                disabled={readOnly || running || columns.length === 0}
+                className="control-shell mt-3 w-full rounded-lg px-3 py-2 text-sm outline-none"
+              >
+                {columns.map((column) => (
+                  <option key={column.id} value={column.id}>
+                    {column.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => void runAction('move')}
+                disabled={readOnly || running || count === 0 || !targetColumnId}
+                className="button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
+              >
+                <ArrowRightLeft size={15} />
+                move filtered tasks
+              </button>
+            </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <div className="surface-subtle rounded-2xl p-3">
-          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-            move slice
-          </p>
-          <select
-            data-testid="bulk-move-select"
-            value={targetColumnId}
-            onChange={(event) => setTargetColumnId(event.target.value)}
-            disabled={readOnly || running || columns.length === 0}
-            className="control-shell mt-3 w-full rounded-lg px-3 py-2 text-sm outline-none"
-          >
-            {columns.map((column) => (
-              <option key={column.id} value={column.id}>
-                {column.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => void runAction('move')}
-            disabled={readOnly || running || count === 0 || !targetColumnId}
-            className="button-primary mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-          >
-            <ArrowRightLeft size={15} />
-            move filtered tasks
-          </button>
-        </div>
+            <div className="surface-subtle rounded-2xl p-3">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                retune priority
+              </p>
+              <select
+                data-testid="bulk-priority-select"
+                value={targetPriority}
+                onChange={(event) => setTargetPriority(event.target.value as Priority)}
+                disabled={readOnly || running}
+                className="control-shell mt-3 w-full rounded-lg px-3 py-2 text-sm outline-none"
+              >
+                {priorities.map((priority) => (
+                  <option key={priority} value={priority}>
+                    {priority}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => void runAction('priority')}
+                disabled={readOnly || running || count === 0}
+                className="button-ghost mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
+              >
+                <Flame size={15} />
+                update slice priority
+              </button>
+            </div>
 
-        <div className="surface-subtle rounded-2xl p-3">
-          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-            retune priority
-          </p>
-          <select
-            data-testid="bulk-priority-select"
-            value={targetPriority}
-            onChange={(event) => setTargetPriority(event.target.value as Priority)}
-            disabled={readOnly || running}
-            className="control-shell mt-3 w-full rounded-lg px-3 py-2 text-sm outline-none"
-          >
-            {priorities.map((priority) => (
-              <option key={priority} value={priority}>
-                {priority}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => void runAction('priority')}
-            disabled={readOnly || running || count === 0}
-            className="button-ghost mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-          >
-            <Flame size={15} />
-            update slice priority
-          </button>
-        </div>
-
-        <div className="surface-subtle rounded-2xl p-3">
-          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-            destructive
-          </p>
-          <p className="mt-3 text-sm text-[var(--text-secondary)]">
-            delete every task in the current filtered slice.
-          </p>
-          <button
-            type="button"
-            onClick={() => void runAction('delete')}
-            disabled={readOnly || running || count === 0}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-200 disabled:opacity-50"
-          >
-            <Trash2 size={15} />
-            delete filtered tasks
-          </button>
-        </div>
-      </div>
+            <div className="surface-subtle rounded-2xl p-3">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                destructive
+              </p>
+              <p className="mt-3 text-sm text-[var(--text-secondary)]">
+                delete every task in the current filtered slice.
+              </p>
+              <button
+                type="button"
+                onClick={() => void runAction('delete')}
+                disabled={readOnly || running || count === 0}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-200 disabled:opacity-50"
+              >
+                <Trash2 size={15} />
+                delete filtered tasks
+              </button>
+            </div>
+          </div>
+        </>
+      </CollapsiblePanel>
     </section>
   );
 }

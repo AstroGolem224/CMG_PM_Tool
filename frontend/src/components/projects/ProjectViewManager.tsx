@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { projectsApi } from '@/api/projects';
+import CollapsiblePanel from '@/components/common/CollapsiblePanel';
 import ErrorBanner from '@/components/common/ErrorBanner';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/uiStore';
@@ -549,145 +550,149 @@ export default function ProjectViewManager({
 
   return (
     <section className="glass p-4">
-      {error && <ErrorBanner message={error} />}
-      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[1.2fr_0.8fr] xl:items-stretch">
-        <div className="bevel-panel p-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-            // saved views
-          </p>
-          <h2 className="panel-heading mt-1 text-lg">Board Memories</h2>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            pin the slices you reuse, and mark one default if this board should boot into a known state.
-          </p>
-
-          <div className="mt-4 flex flex-col gap-3">
-            <input
-              value={draftName}
-              onChange={(event) => setDraftName(event.target.value)}
-              placeholder="view name"
-              disabled={readOnly}
-              className="control-shell rounded-lg px-3 py-2 text-sm outline-none"
-            />
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setSavePinned((current) => !current)}
-                disabled={readOnly}
-                className={cn(
-                  'button-ghost inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs uppercase tracking-[0.18em] disabled:opacity-50',
-                  savePinned && 'border-[var(--glass-border-hot)] text-[var(--text-primary)]'
-                )}
-              >
-                <Pin size={13} />
-                pin on save
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setSaveDefault((current) => {
-                    const next = !current;
-                    if (next) setSavePinned(true);
-                    return next;
-                  })
-                }
-                disabled={readOnly}
-                className={cn(
-                  'button-ghost inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs uppercase tracking-[0.18em] disabled:opacity-50',
-                  saveDefault && 'border-[var(--glass-border-hot)] text-[var(--accent-gold)]'
-                )}
-              >
-                <Sparkles size={13} />
-                load by default
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => void saveCurrentView()}
-                disabled={readOnly || !draftName.trim()}
-                className="button-primary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-              >
-                <BookmarkPlus size={15} />
-                save current view
-              </button>
-              <button
-                type="button"
-                onClick={() => void overwriteActiveView()}
-                disabled={readOnly || !activeView}
-                className="button-secondary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-              >
-                <RefreshCcw size={15} />
-                overwrite active
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="surface-subtle p-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-            // status
-          </p>
-          <div className="mt-3 space-y-3 text-sm text-[var(--text-secondary)]">
-            <div className="flex items-center justify-between gap-3">
-              <span>active memory</span>
-              <span className="font-mono uppercase tracking-[0.18em] text-[var(--text-primary)]">
-                {activeView?.name ?? 'none'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <span>boot preset</span>
-              <span className="font-mono uppercase tracking-[0.18em] text-[var(--accent-gold)]">
-                {views.find((view) => view.is_default)?.name ?? 'manual'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <span>pinned rail</span>
-              <span className="font-mono uppercase tracking-[0.18em] text-[var(--text-primary)]">
-                {pinnedViews.length}
-              </span>
-            </div>
-            <p className="border-t border-[var(--glass-border)] pt-3 text-xs leading-6 text-[var(--text-muted)]">
-              default views apply once when the board opens. pinned views stay at the top so recurring slices do not get buried.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-4">
-        {loading ? (
-          <div className="surface-subtle px-3 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
-            loading views
-          </div>
-        ) : views.length === 0 ? (
-          <div className="surface-subtle px-3 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
-            no saved views yet
-          </div>
-        ) : (
-          <>
-            {pinnedViews.length > 0 && (
-              <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                  // pinned rail
-                </p>
-                <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                  {pinnedViews.map((view, index) => renderViewCard(view, true, index, pinnedViews.length))}
+      <CollapsiblePanel
+        eyebrow="// saved views"
+        title="Board Memories"
+        description="pin the slices you reuse, and mark one default if this board should boot into a known state."
+        storageKey={`board:${projectId}:saved-views`}
+        contentClassName="mt-4"
+      >
+        <div className="grid gap-4">
+          {error && <ErrorBanner message={error} />}
+          <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[1.2fr_0.8fr] xl:items-stretch">
+            <div className="bevel-panel p-4">
+              <div className="flex flex-col gap-3">
+                <input
+                  value={draftName}
+                  onChange={(event) => setDraftName(event.target.value)}
+                  placeholder="view name"
+                  disabled={readOnly}
+                  className="control-shell rounded-lg px-3 py-2 text-sm outline-none"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSavePinned((current) => !current)}
+                    disabled={readOnly}
+                    aria-pressed={savePinned}
+                    className={cn(
+                      'button-ghost inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs uppercase tracking-[0.18em] disabled:opacity-50',
+                      savePinned && 'border-[var(--glass-border-hot)] text-[var(--text-primary)]'
+                    )}
+                  >
+                    <Pin size={13} />
+                    pin on save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSaveDefault((current) => {
+                        const next = !current;
+                        if (next) setSavePinned(true);
+                        return next;
+                      })
+                    }
+                    disabled={readOnly}
+                    aria-pressed={saveDefault}
+                    className={cn(
+                      'button-ghost inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs uppercase tracking-[0.18em] disabled:opacity-50',
+                      saveDefault && 'border-[var(--glass-border-hot)] text-[var(--accent-gold)]'
+                    )}
+                  >
+                    <Sparkles size={13} />
+                    load by default
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void saveCurrentView()}
+                    disabled={readOnly || !draftName.trim()}
+                    className="button-primary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
+                  >
+                    <BookmarkPlus size={15} />
+                    save current view
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void overwriteActiveView()}
+                    disabled={readOnly || !activeView}
+                    className="button-secondary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
+                  >
+                    <RefreshCcw size={15} />
+                    overwrite active
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
 
-            {libraryViews.length > 0 && (
-              <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                  // library
-                </p>
-                <div className="mt-3 grid gap-3">
-                  {libraryViews.map((view, index) => renderViewCard(view, false, index, libraryViews.length))}
+            <div className="surface-subtle p-4">
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                // status
+              </p>
+              <div className="mt-3 space-y-3 text-sm text-[var(--text-secondary)]">
+                <div className="flex items-center justify-between gap-3">
+                  <span>active memory</span>
+                  <span className="font-mono uppercase tracking-[0.18em] text-[var(--text-primary)]">
+                    {activeView?.name ?? 'none'}
+                  </span>
                 </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>boot preset</span>
+                  <span className="font-mono uppercase tracking-[0.18em] text-[var(--accent-gold)]">
+                    {views.find((view) => view.is_default)?.name ?? 'manual'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>pinned rail</span>
+                  <span className="font-mono uppercase tracking-[0.18em] text-[var(--text-primary)]">
+                    {pinnedViews.length}
+                  </span>
+                </div>
+                <p className="border-t border-[var(--glass-border)] pt-3 text-xs leading-6 text-[var(--text-muted)]">
+                  default views apply once when the board opens. pinned views stay at the top so recurring slices do not get buried.
+                </p>
               </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {loading ? (
+              <div className="surface-subtle px-3 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                loading views
+              </div>
+            ) : views.length === 0 ? (
+              <div className="surface-subtle px-3 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                no saved views yet
+              </div>
+            ) : (
+              <>
+                {pinnedViews.length > 0 && (
+                  <div>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                      // pinned rail
+                    </p>
+                    <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                      {pinnedViews.map((view, index) => renderViewCard(view, true, index, pinnedViews.length))}
+                    </div>
+                  </div>
+                )}
+
+                {libraryViews.length > 0 && (
+                  <div>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                      // library
+                    </p>
+                    <div className="mt-3 grid gap-3">
+                      {libraryViews.map((view, index) => renderViewCard(view, false, index, libraryViews.length))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      </CollapsiblePanel>
     </section>
   );
 }

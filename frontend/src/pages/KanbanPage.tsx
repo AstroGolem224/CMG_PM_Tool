@@ -107,6 +107,7 @@ export default function KanbanPage() {
             title="Board Slice"
             hint="focus the kanban lanes by label, priority and completion."
             emptyText="no project labels available"
+            storageKey={`board:${currentProject.id}:task-filters`}
             onChange={setFilters}
           />
           <ProjectViewManager
