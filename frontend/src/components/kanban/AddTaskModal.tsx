@@ -87,6 +87,9 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
           exit={{ opacity: 0, y: 40 }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
           className="relative glass w-full max-w-none md:max-w-md rounded-t-2xl md:rounded-xl p-6 shadow-2xl"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-task-modal-title"
           style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
         >
           {/* M6: Drag handle — mobile only */}
@@ -99,11 +102,12 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
                 // task injection
               </p>
-              <h2 className="panel-heading mt-1">New Task</h2>
+              <h2 id="add-task-modal-title" className="panel-heading mt-1">New Task</h2>
             </div>
             <button
               onClick={onClose}
               className="button-ghost rounded-lg p-2"
+              aria-label="Close new task dialog"
             >
               <X size={18} />
             </button>
@@ -113,10 +117,14 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
             {error && <ErrorBanner message={error} />}
             {/* Title */}
             <div>
-              <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              <label
+                htmlFor="add-task-title"
+                className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
+              >
                 Title <span className="text-red-400">*</span>
               </label>
               <input
+                id="add-task-title"
                 ref={titleRef}
                 type="text"
                 value={title}
@@ -129,10 +137,14 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
 
             {/* Description */}
             <div>
-              <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              <label
+                htmlFor="add-task-description"
+                className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
+              >
                 Description
               </label>
               <textarea
+                id="add-task-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Optional description..."
@@ -172,10 +184,14 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
 
             {/* Deadline */}
             <div>
-              <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              <label
+                htmlFor="add-task-deadline"
+                className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
+              >
                 Deadline
               </label>
               <input
+                id="add-task-deadline"
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
@@ -185,11 +201,15 @@ export default function AddTaskModal({ columnId, onClose }: AddTaskModalProps) {
 
             {/* Recurrence */}
             <div>
-              <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              <label
+                htmlFor="add-task-recurrence"
+                className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]"
+              >
                 <Repeat size={12} className="inline mr-1" />
                 Recurrence
               </label>
               <select
+                id="add-task-recurrence"
                 value={recurrenceType}
                 onChange={(e) => setRecurrenceType(e.target.value as RecurrenceType)}
                 className="control-shell w-full rounded-lg px-3 py-2 text-sm outline-none [color-scheme:dark]"

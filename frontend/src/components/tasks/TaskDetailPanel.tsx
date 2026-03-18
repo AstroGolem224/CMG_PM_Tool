@@ -110,6 +110,9 @@ export default function TaskDetailPanel() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="task-detail-title"
               className="fixed inset-0 z-[9999] flex flex-col glass"
             >
               <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-4 py-3">
@@ -169,6 +172,9 @@ export default function TaskDetailPanel() {
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               data-testid="task-detail-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="task-detail-title"
               className="fixed right-0 top-0 bottom-0 z-[9999] flex w-full max-w-lg flex-col border-l border-[var(--glass-border)] glass shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-6 py-4">
@@ -176,7 +182,7 @@ export default function TaskDetailPanel() {
                   <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--text-secondary)]">
                     // task detail
                   </p>
-                  <h2 className="panel-heading mt-1">Task Details</h2>
+                  <h2 id="task-detail-title" className="panel-heading mt-1">Task Details</h2>
                 </div>
                 <div className="flex items-center gap-2">
                   <button

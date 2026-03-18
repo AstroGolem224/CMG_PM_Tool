@@ -71,6 +71,8 @@ export default function Sidebar({ mobile = false }: SidebarProps) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              id="mobile-sidebar"
+              aria-label="Project navigation"
               className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col glass border-r border-[var(--glass-border)] md:hidden"
             >
               {/* Header */}
@@ -100,6 +102,7 @@ export default function Sidebar({ mobile = false }: SidebarProps) {
                     <button
                       key={path}
                       onClick={() => handleNav(path)}
+                      aria-current={isActive ? 'page' : undefined}
                       className={cn(
                         'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
                         isActive
@@ -135,6 +138,7 @@ export default function Sidebar({ mobile = false }: SidebarProps) {
                       <button
                         key={project.id}
                         onClick={() => handleNav(`/projects/${project.id}`)}
+                        aria-current={isActive ? 'page' : undefined}
                         className={cn(
                           'flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
                           isActive
@@ -205,6 +209,7 @@ export default function Sidebar({ mobile = false }: SidebarProps) {
             <button
               key={path}
               onClick={() => navigate(path)}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
                 isActive
@@ -253,6 +258,7 @@ export default function Sidebar({ mobile = false }: SidebarProps) {
               <button
                 key={project.id}
                 onClick={() => navigate(`/projects/${project.id}`)}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
                   isActive

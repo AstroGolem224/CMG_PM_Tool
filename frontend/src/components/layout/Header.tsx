@@ -30,7 +30,9 @@ export default function Header() {
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="rounded-lg p-2 text-[var(--text-secondary)] transition hover:bg-white/10 hover:text-[var(--text-primary)] md:hidden"
-          aria-label="Open menu"
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-controls="mobile-sidebar"
+          aria-expanded={mobileMenuOpen}
         >
           <Menu size={22} />
         </button>
@@ -87,6 +89,7 @@ export default function Header() {
               key={id}
               type="button"
               onClick={() => setTheme(id)}
+              aria-pressed={theme === id}
               className={`rounded-md px-1.5 md:px-2 py-1 transition ${
                 theme === id
                   ? 'bg-[var(--accent-primary)] text-[var(--bg-void)] shadow-[var(--glow-primary)]'

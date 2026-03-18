@@ -24,6 +24,8 @@ export default function BottomNav() {
           <button
             key={path}
             onClick={() => navigate(path)}
+            aria-label={`Open ${label}`}
+            aria-current={isActive ? 'page' : undefined}
             className={cn(
               'flex flex-col items-center gap-1 py-2 px-4 text-[10px] font-mono uppercase tracking-[0.16em] transition-colors',
               isActive
